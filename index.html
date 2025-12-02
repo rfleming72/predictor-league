@@ -1,1206 +1,820 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Premier League Predictor League</title>
-   <!-- Load Tailwind CSS -->
-   <script src="https://cdn.tailwindcss.com"></script>
-   <style>
-       body {
-           font-family: 'Inter', sans-serif;
-           background-color: #f4f7f9; /* Light background */
-           min-height: 100vh;
-       }
-       .app-container {
-           max-width: 900px;
-       }
-       .card {
-           background-color: white;
-           border-radius: 0.75rem;
-           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-           border-top: 5px solid #E90052; /* Magenta accent border */
-       }
-       /* Primary button: Razzmatazz (#E90052) */
-       .btn-primary {
-           background-color: #E90052;
-           transition: all 0.15s ease-in-out;
-       }
-       .btn-primary:hover:not(:disabled) {
-           background-color: #CC0047; /* Slightly darker magenta on hover */
-       }
-       /* Secondary button/Focus: Electric Violet (#963CFF) */
-       .btn-secondary {
-           background-color: #963CFF;
-           transition: all 0.15s ease-in-out;
-       }
-       .btn-secondary:hover:not(:disabled) {
-           background-color: #791FFF; /* Slightly darker violet on hover */
-       }
-       .loading-spinner {
-           border: 4px solid #f3f3f3;
-           border-top: 4px solid #E90052;
-           border-radius: 50%;
-           width: 24px;
-           height: 24px;
-           animation: spin 1s linear infinite;
-       }
-       @keyframes spin {
-           0% { transform: rotate(0deg); }
-           100% { transform: rotate(360deg); }
-       }
-       /* Header background for brand identity */
-       header {
-           background-color: #360D3A; /* Deep Purple */
-           color: #FFFFFF;
-           padding: 2rem 1rem;
-           border-radius: 0.75rem 0.75rem 0 0;
-           margin-bottom: 2rem;
-       }
-   </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier League Predictor League</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <!-- React and Babel for running JSX directly in the browser -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="p-4 md:p-8">
-
-   <div id="app" class="app-container mx-auto">
-       <header class="text-center">
-           <h1 class="text-4xl font-extrabold mb-2">⚽ Premier League Predictor 🏆</h1>
-           <p id="auth-status-display" class="text-sm text-gray-300">Initializing application...</p>
-           <p id="user-id-display" class="text-xs font-mono mt-1 p-1 bg-yellow-300 text-gray-900 rounded inline-block"></p>
-           <button id="admin-toggle-btn" class="mt-4 bg-gray-700 text-white text-sm font-medium py-1 px-3 rounded-full hover:bg-gray-600 transition duration-150">
-               Admin Mode
-           </button>
-       </header>
-
-       <!-- Main Content Area: Conditional rendering -->
-       <main id="main-content">
-           <!-- Authentication Choice Screen -->
-           <div id="auth-choice-view" class="card p-8 text-center hidden">
-               <h2 class="text-2xl font-semibold mb-6 text-gray-800">Welcome to the Predictor League!</h2>
-               <p class="text-gray-600 mb-8">Do you already have a team, or are you joining for the first time?</p>
-               <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center">
-                   <!-- Disabled by default, enabled by JS when auth is ready -->
-                   <button id="show-signup-btn" class="btn-primary text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed" disabled>
-                       <span id="show-signup-text">Connecting...</span>
-                   </button>
-                   <!-- Disabled by default, enabled by JS when auth is ready -->
-                   <button id="show-signin-btn" class="btn-secondary text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed" disabled>
-                       <span id="show-signin-text">Connecting...</span>
-                   </button>
-               </div>
-           </div>
-
-           <!-- Sign Up View (Now includes Name and Email) -->
-           <div id="signup-view" class="card p-6 hidden">
-               <h2 class="text-2xl font-semibold mb-4 text-gray-800">Create Your Team</h2>
-               <input type="text" id="signup-first-name" placeholder="First Name" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-               <input type="text" id="signup-last-name" placeholder="Last Name" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-               <input type="email" id="signup-email" placeholder="Email Address" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-               <input type="text" id="signup-team-name" placeholder="Enter Team Name (e.g., The Reds)" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-               <input type="password" id="signup-pin" placeholder="Create 4-digit PIN (for sign-in)" maxlength="4" class="w-full p-3 mb-6 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-               <!-- Disabled by default, enabled by JS when auth is ready -->
-               <button id="signup-btn" class="btn-primary w-full text-white font-bold py-3 rounded-xl shadow-md disabled:opacity-60 disabled:cursor-not-allowed" disabled>
-                   Register & Enter League
-               </button>
-               <button id="back-to-choice-signup" class="mt-4 text-sm text-gray-500 hover:text-gray-700 w-full">Back to Choice</button>
-               <p id="signup-error" class="text-red-500 text-sm mt-3 hidden"></p>
-           </div>
-
-           <!-- Sign In View -->
-           <div id="signin-view" class="card p-6 hidden">
-               <h2 class="text-2xl font-semibold mb-4 text-gray-800">Sign In to Your Team</h2>
-               <input type="text" id="signin-team-name" placeholder="Enter Your Team Name" class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-[#963CFF] focus:border-[#963CFF]">
-               <input type="password" id="signin-pin" placeholder="Enter 4-digit PIN" maxlength="4" class="w-full p-3 mb-6 border border-gray-300 rounded-lg focus:ring-[#963CFF] focus:border-[#963CFF]">
-               <!-- Disabled by default, enabled by JS when auth is ready -->
-               <button id="signin-btn" class="btn-secondary w-full text-white font-bold py-3 rounded-xl shadow-md disabled:opacity-60 disabled:cursor-not-allowed" disabled>
-                   Sign In
-               </button>
-               <button id="back-to-choice-signin" class="mt-4 text-sm text-gray-500 hover:text-gray-700 w-full">Back to Choice</button>
-               <p id="signin-error" class="text-red-500 text-sm mt-3 hidden"></p>
-           </div>
-          
-           <!-- Application Views (Visible after successful sign-in/sign-up) -->
-           <div id="app-views" class="hidden">
-               <div class="flex space-x-4 mb-6">
-                   <!-- Nav Buttons use Razzmatazz for primary highlight -->
-                   <button id="show-predictions-btn" class="flex-1 py-3 px-4 bg-[#E90052] text-white font-semibold rounded-xl shadow-md hover:bg-[#CC0047]">Make Predictions</button>
-                   <button id="show-leaderboard-btn" class="flex-1 py-3 px-4 bg-gray-200 text-gray-800 font-semibold rounded-xl shadow-md hover:bg-gray-300">Leaderboard</button>
-                   <button id="show-profile-btn" class="flex-1 py-3 px-4 bg-gray-200 text-gray-800 font-semibold rounded-xl shadow-md hover:bg-gray-300">My Profile</button>
-               </div>
-
-               <!-- Predictions View -->
-               <div id="predictions-view" class="card p-6">
-                   <h2 class="text-2xl font-semibold text-gray-800 mb-4">Game Week <span id="current-gameweek-display">...</span> Predictions</h2>
-                   <div id="fixture-list" class="space-y-4 mb-6">
-                       <p class="text-center text-gray-500">Loading fixtures...</p>
-                       <!-- Fixtures populated here -->
-                   </div>
-                   <button id="save-predictions-btn" class="btn-primary w-full text-white font-bold py-3 rounded-xl shadow-md disabled:opacity-50" disabled>
-                       Save My Predictions
-                   </button>
-                   <p id="predictions-message" class="text-center text-sm mt-3 font-medium text-red-500 hidden"></p>
-               </div>
-
-               <!-- Leaderboard View -->
-               <div id="leaderboard-view" class="card p-6 hidden">
-                   <h2 class="text-2xl font-semibold text-gray-800 mb-4">League Table</h2>
-                   <div id="leaderboard-list" class="space-y-2">
-                       <p class="text-center text-gray-500">Loading leaderboard...</p>
-                   </div>
-               </div>
-
-               <!-- Profile View -->
-               <div id="profile-view" class="card p-6 hidden">
-                   <h2 class="text-2xl font-semibold mb-4 text-gray-800">Manage My Profile</h2>
-                  
-                   <div class="space-y-4 mb-6">
-                       <label class="block">
-                           <span class="text-gray-700">First Name</span>
-                           <input type="text" id="profile-first-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-                       </label>
-                       <label class="block">
-                           <span class="text-gray-700">Last Name</span>
-                           <input type="text" id="profile-last-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-                       </label>
-                       <label class="block">
-                           <span class="text-gray-700">Email Address</span>
-                           <input type="email" id="profile-email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-                       </label>
-                       <label class="block">
-                           <span class="text-gray-700">Team Name</span>
-                           <input type="text" id="profile-team-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-                       </label>
-                       <label class="block">
-                           <span class="text-gray-700">Update PIN (4-digit)</span>
-                           <input type="password" id="profile-pin" placeholder="Enter new PIN or leave blank to keep current" maxlength="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-[#E90052] focus:border-[#E90052]">
-                       </label>
-                   </div>
-
-                   <button id="update-profile-btn" class="btn-primary w-full text-white font-bold py-3 rounded-xl shadow-md">
-                       Save Changes
-                   </button>
-                   <p id="profile-message" class="text-center text-sm mt-3 font-medium text-red-500 hidden"></p>
-               </div>
-
-
-               <!-- Admin View -->
-               <div id="admin-view" class="card p-6 hidden bg-gray-50 border-red-500 border-2">
-                   <h2 class="text-2xl font-semibold text-red-700 mb-4 border-b pb-2 border-red-200">ADMIN MODE</h2>
-                  
-                   <!-- 1. Score Entry Section -->
-                   <div class="mb-8 p-4 border border-gray-300 rounded-lg bg-white shadow-inner">
-                       <h3 class="text-xl font-medium text-gray-700 mb-3">1. Enter Actual Scores (For Scoring)</h3>
-                       <select id="score-gameweek-select" class="w-full p-2 mb-4 border rounded-lg"></select>
-                       <div id="score-entry-list" class="space-y-4">
-                           <p class="text-center text-gray-500">Select a Game Week to enter scores.</p>
-                       </div>
-                       <button id="save-scores-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md disabled:opacity-50" disabled>
-                           Save & Calculate Scores
-                       </button>
-                   </div>
-
-                   <!-- 2. Fixture Population Section -->
-                   <div class="p-4 border border-gray-300 rounded-lg bg-white shadow-inner">
-                       <h3 class="text-xl font-medium text-gray-700 mb-3">2. Populate Upcoming GW Fixtures</h3>
-                       <div class="flex space-x-3 mb-4 items-center">
-                           <label class="font-medium text-gray-600">Game Week:</label>
-                           <input type="number" id="new-gameweek-input" value="15" min="1" class="w-20 p-2 border rounded-lg text-center">
-                       </div>
-                      
-                       <div id="fixture-population-container" class="space-y-4 border p-4 rounded-lg bg-gray-50">
-                           <!-- Fixture dropdowns will be inserted here -->
-                       </div>
-                       <p id="fixture-validation-error" class="text-red-500 text-sm mt-3 hidden">Please correct fixture errors.</p>
-                      
-                       <button id="publish-fixtures-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md disabled:opacity-50">
-                           Publish GW Fixtures
-                       </button>
-                   </div>
-
-                   <p class="text-xs text-red-500 mt-6">Remember: Use this mode with caution!</p>
-               </div>
-           </div>
-       </main>
-   </div>
-
-   <!-- Firebase SDKs -->
-   <script type="module">
-       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-       import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-       import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-       // ====================================================================================
-       // !!! 🔴 CRITICAL STEP: REPLACE THESE PLACEHOLDERS WITH YOUR REAL FIREBASE CONFIG 🔴 !!!
-       // NOTE: If you are running this in the Canvas environment, the values will be automatically provided
-       //       by the '__firebase_config' global variable. We define a fallback config here.
-       const defaultFirebaseConfig = {
-           apiKey: "AIzaSyDWepvqTGqLcjziToDwwbj48oZNRplJX_M",
-  authDomain: "premier-league-predictor-live.firebaseapp.com",
-  projectId: "premier-league-predictor-live",
-  storageBucket: "premier-league-predictor-live.firebasestorage.app",
-  messagingSenderId: "599727798420",
-  appId: "1:599727798420:web:f2cbe07ca328db5aab1c81"
-       };
-      
-       const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
-       const appId = typeof __app_id !== 'undefined' ? __app_id : 'pl-predictor-league'; // App ID for collection path
-       const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-       // ====================================================================================
-
-       // Global State & Constants
-       let db;
-       let auth;
-       let userId = null;
-       let isAuthReady = false;
-       let isAdmin = false;
-
-       let currentView = 'auth-choice-view'; // Default starting view
-       let currentProfile = null;
-       let currentGameweek = 1;
-       let fixtures = []; // Current week's fixtures
-       let predictions = {}; // Current user's predictions for the current week
-       let leaderboard = [];
-
-       // Updated TEAMS array to include Leeds United and Sunderland for GW14 fixtures
-       const TEAMS = [
-           "Arsenal", "Aston Villa", "Bournemouth", "Brentford", "Brighton and Hove Albion",
-           "Chelsea", "Crystal Palace", "Everton", "Fulham", "Liverpool",
-           "Leeds United",
-           "Manchester City", "Manchester United", "Newcastle United",
-           "Nottingham Forest", "Sunderland",
-           "Tottenham Hotspur", "West Ham United",
-           "Wolverhampton Wanderers", "Burnley"
-       ].sort();
-
-       // Hardcoded GW 14 Fixtures (for automatic population)
-       const GW_14_FIXTURES = [
-           { homeTeam: "Bournemouth", awayTeam: "Everton", homeScore: null, awayScore: null },
-           { homeTeam: "Fulham", awayTeam: "Manchester City", homeScore: null, awayScore: null },
-           { homeTeam: "Newcastle United", awayTeam: "Tottenham Hotspur", homeScore: null, awayScore: null },
-           { homeTeam: "Arsenal", awayTeam: "Brentford", homeScore: null, awayScore: null },
-           { homeTeam: "Brighton and Hove Albion", awayTeam: "Aston Villa", homeScore: null, awayScore: null },
-           { homeTeam: "Burnley", awayTeam: "Crystal Palace", homeScore: null, awayScore: null },
-           { homeTeam: "Wolverhampton Wanderers", awayTeam: "Nottingham Forest", homeScore: null, awayScore: null },
-           { homeTeam: "Leeds United", awayTeam: "Chelsea", homeScore: null, awayScore: null },
-           { homeTeam: "Liverpool", awayTeam: "Sunderland", homeScore: null, awayScore: null },
-           { homeTeam: "Manchester United", awayTeam: "West Ham United", homeScore: null, awayScore: null }
-       ];
-
-       // --- UI Elements ---
-       const authStatusDisplayEl = document.getElementById('auth-status-display');
-       const userIdDisplayEl = document.getElementById('user-id-display');
-       const adminToggleBtn = document.getElementById('admin-toggle-btn');
-       const mainContentEl = document.getElementById('main-content');
-       const signupViewEl = document.getElementById('signup-view');
-       const signinViewEl = document.getElementById('signin-view');
-       const authChoiceViewEl = document.getElementById('auth-choice-view');
-       const appViewsEl = document.getElementById('app-views');
-
-       const predictionsViewEl = document.getElementById('predictions-view');
-       const leaderboardViewEl = document.getElementById('leaderboard-view');
-       const profileViewEl = document.getElementById('profile-view'); // NEW Profile View
-       const adminViewEl = document.getElementById('admin-view');
-      
-       // Admin Elements
-       const fixturePopulationContainerEl = document.getElementById('fixture-population-container');
-       const newGameweekInputEl = document.getElementById('new-gameweek-input');
-       const publishFixturesBtn = document.getElementById('publish-fixtures-btn');
-       const scoreGameweekSelectEl = document.getElementById('score-gameweek-select');
-       const scoreEntryListEl = document.getElementById('score-entry-list');
-       const saveScoresBtn = document.getElementById('save-scores-btn');
-      
-       // Auth Buttons (For disabling/enabling)
-       const showSignupBtn = document.getElementById('show-signup-btn');
-       const showSigninBtn = document.getElementById('show-signin-btn');
-       const signupBtn = document.getElementById('signup-btn');
-       const signinBtn = document.getElementById('signin-btn');
-
-
-       // --- Firestore Path Utilities ---
-       function getUserId() {
-           return auth.currentUser?.uid || 'anonymous-user'; // Fallback
-       }
-       function getPrivateProfileDocRef(uid) {
-           // Path: /artifacts/{appId}/users/{userId}/profile/data
-           return doc(db, 'artifacts', appId, 'users', uid, 'profile', 'data');
-       }
-       function getPublicCollectionRef(collectionName) {
-           // Path: /artifacts/{appId}/public/data/{collectionName}
-           return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
-       }
-       function getPredictionDocRef(uid, gameweek) {
-           // Path: /artifacts/{appId}/users/{userId}/predictions/gw{gameweek}
-           return doc(db, 'artifacts', appId, 'users', uid, 'predictions', `gw${gameweek}`);
-       }
-       function getFixtureDocRef(gameweek) {
-           // Path: /artifacts/{appId}/public/data/fixtures/gw{gameweek}
-           return doc(db, 'artifacts', appId, 'public', 'data', 'fixtures', `gw${gameweek}`);
-       }
-
-       // --- View Management ---
-       function switchView(newView) {
-           const views = {
-               'auth-choice-view': authChoiceViewEl,
-               'signup-view': signupViewEl,
-               'signin-view': signinViewEl,
-               'predictions-view': predictionsViewEl,
-               'leaderboard-view': leaderboardViewEl,
-               'profile-view': profileViewEl, // New view added here
-               'admin-view': adminViewEl
-           };
-
-           // Hide all views first
-           Object.values(views).forEach(el => el.classList.add('hidden'));
-           appViewsEl.classList.add('hidden');
-
-           // Show current view
-           if (newView in views) {
-               views[newView].classList.remove('hidden');
-           }
-
-           if (['predictions-view', 'leaderboard-view', 'profile-view', 'admin-view'].includes(newView)) {
-               appViewsEl.classList.remove('hidden');
-               predictionsViewEl.classList.add('hidden');
-               leaderboardViewEl.classList.add('hidden');
-               profileViewEl.classList.add('hidden');
-               adminViewEl.classList.add('hidden');
-
-               // Activate correct sub-view
-               if (newView === 'predictions-view') predictionsViewEl.classList.remove('hidden');
-               if (newView === 'leaderboard-view') leaderboardViewEl.classList.remove('hidden');
-               if (newView === 'profile-view') {
-                   profileViewEl.classList.remove('hidden');
-                   renderProfileView(); // Populate fields when switching to profile view
-               }
-               if (newView === 'admin-view') adminViewEl.classList.remove('hidden');
-           }
-           currentView = newView;
-           updateNavButtons();
-       }
-
-       function updateNavButtons() {
-           const activeBgClass = 'bg-[#E90052] text-white'; // Razzmatazz
-           const inactiveBgClass = 'bg-gray-200 text-gray-800';
-
-           document.getElementById('show-predictions-btn').className = 'flex-1 py-3 px-4 font-semibold rounded-xl shadow-md transition duration-150 ' +
-               (currentView === 'predictions-view' ? activeBgClass + ' hover:bg-[#CC0047]' : inactiveBgClass + ' hover:bg-gray-300');
-          
-           document.getElementById('show-leaderboard-btn').className = 'flex-1 py-3 px-4 font-semibold rounded-xl shadow-md transition duration-150 ' +
-               (currentView === 'leaderboard-view' ? activeBgClass + ' hover:bg-[#CC0047]' : inactiveBgClass + ' hover:bg-gray-300');
-
-           document.getElementById('show-profile-btn').className = 'flex-1 py-3 px-4 font-semibold rounded-xl shadow-md transition duration-150 ' +
-               (currentView === 'profile-view' ? activeBgClass + ' hover:bg-[#CC0047]' : inactiveBgClass + ' hover:bg-gray-300');
-       }
-
-       // --- Status Updates & Button Toggling (The Fix) ---
-       function updateAuthStatus(message, isError = false) {
-           authStatusDisplayEl.textContent = message;
-           if (isError) {
-               authStatusDisplayEl.classList.remove('text-gray-300', 'text-green-300');
-               authStatusDisplayEl.classList.add('text-yellow-400'); // Use a brighter text for errors on purple background
-           } else {
-               authStatusDisplayEl.classList.remove('text-yellow-400');
-               authStatusDisplayEl.classList.add('text-gray-300');
-           }
-       }
-      
-       function toggleAuthButtons(isEnabled) {
-           const buttons = [showSignupBtn, showSigninBtn, signupBtn, signinBtn];
-          
-           buttons.forEach(btn => btn.disabled = !isEnabled);
-
-           // Update text/visuals for initialization screen
-           document.getElementById('show-signup-text').textContent = isEnabled ? 'First Time? Sign Up' : 'Connecting...';
-           document.getElementById('show-signin-text').textContent = isEnabled ? 'Returning? Sign In' : 'Connecting...';
-       }
-
-       function displayError(id, message) {
-           const el = document.getElementById(id);
-           el.textContent = message;
-           el.classList.remove('hidden', 'text-green-500');
-           el.classList.add('text-red-500');
-           setTimeout(() => el.classList.add('hidden'), 5000);
-       }
-
-       function displaySuccess(id, message) {
-           const el = document.getElementById(id);
-           el.textContent = message;
-           el.classList.remove('hidden', 'text-red-500');
-           el.classList.add('text-green-500');
-           setTimeout(() => el.classList.add('hidden'), 3000);
-       }
-      
-       // --- ADMIN: Auto-populate GW 14 if it doesn't exist ---
-       async function checkAndPopulateGW14() {
-           const GW = 14;
-           const fixtureRef = getFixtureDocRef(GW);
-          
-           try {
-               const docSnap = await getDoc(fixtureRef);
-              
-               if (!docSnap.exists()) {
-                   console.log(`GW ${GW} fixtures not found. Auto-populating...`);
-                   await setDoc(fixtureRef, {
-                       matches: GW_14_FIXTURES,
-                       timestamp: serverTimestamp()
-                   });
-                   console.log(`GW ${GW} fixtures published successfully.`);
-                  
-                   // Update the new gameweek input in Admin view to GW 15
-                   newGameweekInputEl.value = GW + 1;
-
-               } else {
-                   console.log(`GW ${GW} fixtures already exist. Skipping auto-population.`);
-               }
-           } catch (error) {
-               console.error(`Error during auto-population of GW ${GW}:`, error);
-           }
-       }
-
-       // --- Core Application Initialization & Auth ---
-       async function initializeAppAndAuth() {
-           setLogLevel('Debug');
-           toggleAuthButtons(false); // Disable buttons immediately
-
-           try {
-               if (firebaseConfig.apiKey === "YOUR_API_KEY" && initialAuthToken === null) {
-                   console.warn("Using placeholder Firebase configuration. Please replace keys if deploying outside of Canvas.");
-               }
-              
-               updateAuthStatus('Starting Firebase initialization...');
-               const app = initializeApp(firebaseConfig);
-               db = getFirestore(app);
-               auth = getAuth(app);
-              
-               // 1. Authenticate using custom token or anonymously
-               const authenticate = async () => {
-                    if (initialAuthToken) {
-                       await signInWithCustomToken(auth, initialAuthToken);
-                   } else {
-                       await signInAnonymously(auth);
-                   }
-               }
-               authenticate().catch(e => console.error("Initial Authentication Failed:", e));
-
-
-               // 2. Set up Auth State Listener (Critical for readiness)
-               onAuthStateChanged(auth, async (user) => {
-                   if (user) {
-                       userId = user.uid;
-                       isAuthReady = true;
-                       userIdDisplayEl.textContent = `User ID: ${userId}`; // Displaying full ID for collaboration
-                       updateAuthStatus('Authentication ready. Checking profile...');
-
-                       // Enable buttons once we know we have a user and auth is ready
-                       toggleAuthButtons(true);
-
-                       // CRITICAL: Auto-populate GW 14 fixtures here
-                       await checkAndPopulateGW14();
-
-                       // 3. Check if user already has a profile
-                       await checkProfileAndRoute();
-                      
-                       // 4. Start all data listeners
-                       if (currentProfile) {
-                           startRealtimeListeners();
-                       }
-
-                   } else {
-                       // This block should only hit if sign-in failed or user signed out
-                       userId = null;
-                       isAuthReady = false;
-                       userIdDisplayEl.textContent = 'Not Signed In';
-                       switchView('auth-choice-view');
-                       updateAuthStatus('Ready for sign-in/sign-up.', true);
-                       toggleAuthButtons(true); // Enable choice buttons even if anonymous sign-in failed
-                   }
-               });
-
-           } catch (error) {
-               console.error("Initialization Failed:", error);
-               switchView('auth-choice-view');
-               updateAuthStatus(`Initialization Error: ${error.message}. Please check config.`, true);
-               toggleAuthButtons(true); // Allow interaction even on error if possible
-           }
-       }
-
-       // --- Profile Handling & Routing ---
-
-       async function checkProfileAndRoute() {
-           const profileRef = getPrivateProfileDocRef(userId);
-           const profileSnap = await getDoc(profileRef);
-
-           if (profileSnap.exists()) {
-               currentProfile = profileSnap.data();
-               isAdmin = currentProfile.teamName === 'AdminTeam123'; // Simple admin check
-               updateAuthStatus(`Signed in as ${currentProfile.teamName}.`);
-               switchView('predictions-view');
-           } else {
-               // Profile doesn't exist, show choice screen
-               currentProfile = null;
-               switchView('auth-choice-view');
-               updateAuthStatus('Please sign up or sign in.');
-           }
-       }
-
-       async function createProfile() {
-           if (!db || !userId || !isAuthReady) {
-               displayError('signup-error', 'App not ready. Please wait for initialization to complete.');
-               return;
-           }
-
-           const firstName = document.getElementById('signup-first-name').value.trim();
-           const lastName = document.getElementById('signup-last-name').value.trim();
-           const email = document.getElementById('signup-email').value.trim();
-           const teamName = document.getElementById('signup-team-name').value.trim();
-           const pin = document.getElementById('signup-pin').value.trim();
-
-           if (!firstName || !lastName || !email || !teamName || pin.length !== 4) {
-               displayError('signup-error', 'All fields (including a 4-digit PIN) are required.');
-               return;
-           }
-
-           try {
-               // Check if Team Name or Email is already taken (Public Collection Check)
-               const profilesRef = getPublicCollectionRef('profiles');
-               const teamQ = query(profilesRef, where('teamName', '==', teamName));
-               const emailQ = query(profilesRef, where('email', '==', email));
-              
-               const [teamSnap, emailSnap] = await Promise.all([getDocs(teamQ), getDocs(emailQ)]);
-
-               if (!teamSnap.empty) {
-                   displayError('signup-error', 'Team Name is already taken.');
-                   return;
-               }
-               if (!emailSnap.empty) {
-                   displayError('signup-error', 'Email is already registered.');
-                   return;
-               }
-              
-               // Construct profile data
-               const profileData = {
-                   firstName,
-                   lastName,
-                   email,
-                   teamName,
-                   pin,
-                   points: 0,
-                   lastUpdated: serverTimestamp(),
-                   isVerified: true
-               };
-
-               // 1. Create Private Profile (User's specific data, required for auth rules)
-               const privateProfileRef = getPrivateProfileDocRef(userId);
-               await setDoc(privateProfileRef, profileData);
-
-               // 2. Create Public Profile (For Leaderboard/Sign-In Lookup)
-               // We use the user's UID as the document ID in the public collection.
-               const publicProfileRef = doc(profilesRef, userId);
-               await setDoc(publicProfileRef, {
-                   ...profileData,
-                   uid: userId
-               });
-
-               // Clear fields on success
-               document.getElementById('signup-first-name').value = '';
-               document.getElementById('signup-last-name').value = '';
-               document.getElementById('signup-email').value = '';
-               document.getElementById('signup-team-name').value = '';
-               document.getElementById('signup-pin').value = '';
-
-
-               currentProfile = (await getDoc(privateProfileRef)).data();
-               startRealtimeListeners();
-               switchView('predictions-view');
-               updateAuthStatus(`Successfully signed up as ${teamName}.`);
-
-           } catch (error) {
-               console.error("Signup failed:", error);
-               displayError('signup-error', `Failed to create profile: ${error.message}`);
-           }
-       }
-
-       async function signIn() { // Reading from DOM elements
-           if (!db || !userId || !isAuthReady) {
-               displayError('signin-error', 'App not ready. Please wait for initialization to complete.');
-               return;
-           }
-          
-           const teamName = document.getElementById('signin-team-name').value.trim();
-           const pin = document.getElementById('signin-pin').value.trim();
-
-           if (!teamName || pin.length !== 4) {
-               displayError('signin-error', 'Team Name and 4-digit PIN are required.');
-               return;
-           }
-
-           try {
-               // Query public profiles to find the matching team name
-               const profilesRef = getPublicCollectionRef('profiles');
-               const q = query(profilesRef, where('teamName', '==', teamName));
-               const querySnapshot = await getDocs(q);
-
-               if (querySnapshot.empty) {
-                   displayError('signin-error', 'Team not found. Please sign up.');
-                   return;
-               }
-
-               const docData = querySnapshot.docs[0].data();
-               //const matchedUserId = querySnapshot.docs[0].id; // The UID of the existing user (needed later if we want to change the user's UID)
-
-               if (docData.pin !== pin) {
-                   displayError('signin-error', 'Incorrect PIN.');
-                   return;
-               }
-
-               // If PIN matches, we update the current user's *private* profile
-               // with the data from the *public* profile for this session.
-               const privateProfileRef = getPrivateProfileDocRef(userId);
-              
-               // Note: The public data is copied to the private data for the session.
-               await setDoc(privateProfileRef, docData, { merge: true });
-
-               currentProfile = (await getDoc(privateProfileRef)).data();
-               isAdmin = currentProfile.teamName === 'AdminTeam123';
-               startRealtimeListeners();
-               switchView('predictions-view');
-               updateAuthStatus(`Signed in successfully as ${teamName}.`);
-
-           } catch (error) {
-               console.error("Sign-in failed:", error);
-               displayError('signin-error', 'Sign-in failed due to an error.');
-           }
-       }
-
-       // --- Realtime Data Listeners ---
-       function startRealtimeListeners() {
-           if (!isAuthReady) return;
-
-           // 1. Fixture Listener
-           onSnapshot(getPublicCollectionRef('fixtures'), (snapshot) => {
-               let allFixtures = {};
-               snapshot.forEach(doc => {
-                   const gw = parseInt(doc.id.replace('gw', ''));
-                   // Check if 'matches' array exists and is not null before assigning
-                   const matches = doc.data().matches || [];
-                   if(matches.length > 0) {
-                       allFixtures[gw] = matches;
-                   }
-               });
-              
-               // Determine current gameweek (highest one defined)
-               const availableGws = Object.keys(allFixtures).map(Number);
-               currentGameweek = availableGws.length > 0 ? Math.max(...availableGws) : 1;
-               fixtures = allFixtures[currentGameweek] || [];
-
-               document.getElementById('current-gameweek-display').textContent = currentGameweek;
-              
-               // Update Admin dropdowns
-               renderGameweekSelect(availableGws);
-
-               // Re-render predictions view
-               renderPredictionsView();
-              
-               // Get user's predictions for this GW
-               getPredictions(currentGameweek);
-           }, (error) => console.error("Fixture listener error:", error));
-
-
-           // 2. Leaderboard Listener (Also updates currentProfile if it was externally modified)
-           onSnapshot(getPublicCollectionRef('profiles'), (snapshot) => {
-               leaderboard = [];
-               let userPublicProfile = null;
-               snapshot.forEach(doc => {
-                   const data = doc.data();
-                   if (data.isVerified && data.teamName) {
-                       leaderboard.push({ ...data, id: doc.id });
-                       if (doc.id === userId) {
-                           userPublicProfile = data;
-                       }
-                   }
-               });
-               leaderboard.sort((a, b) => (b.points || 0) - (a.points || 0)); // Sort by points
-               renderLeaderboardView();
-
-               // Update currentProfile if needed (e.g., admin updated points)
-               if (userPublicProfile) {
-                   currentProfile = { ...currentProfile, ...userPublicProfile };
-                   // If we are on the profile view, re-render to reflect the latest changes
-                   if (currentView === 'profile-view') {
-                       renderProfileView();
-                   }
-               }
-           }, (error) => console.error("Leaderboard listener error:", error));
-       }
-      
-       // --- Prediction Logic ---
-       async function getPredictions(gameweek) {
-           const predictionRef = getPredictionDocRef(getUserId(), gameweek);
-           const predictionSnap = await getDoc(predictionRef);
-
-           predictions = predictionSnap.exists() ? predictionSnap.data().predictions || {} : {};
-           renderPredictionsView();
-       }
-
-       function renderPredictionsView() {
-           const listEl = document.getElementById('fixture-list');
-           listEl.innerHTML = '';
-          
-           if (fixtures.length === 0) {
-               listEl.innerHTML = `<p class="text-center text-gray-500">No fixtures published for Game Week ${currentGameweek}.</p>`;
-               document.getElementById('save-predictions-btn').disabled = true;
-               return;
-           }
-
-           fixtures.forEach((match, index) => {
-               const matchId = `match-${index}`;
-               const prediction = predictions[matchId] || { homeScore: '', awayScore: '' };
-
-               const matchEl = document.createElement('div');
-               matchEl.className = 'flex items-center space-x-2 p-3 bg-gray-50 rounded-lg border';
-               matchEl.innerHTML = `
-                   <div class="font-semibold text-gray-700 w-1/3 text-right truncate">${match.homeTeam}</div>
-                   <input type="number" id="${matchId}-home" value="${prediction.homeScore}" min="0" placeholder="0" class="w-12 text-center p-1 border rounded-md focus:ring-[#963CFF] focus:border-[#963CFF]">
-                   <span class="font-bold text-gray-500">-</span>
-                   <input type="number" id="${matchId}-away" value="${prediction.awayScore}" min="0" placeholder="0" class="w-12 text-center p-1 border rounded-md focus:ring-[#963CFF] focus:border-[#963CFF]">
-                   <div class="font-semibold text-gray-700 w-1/3 text-left truncate">${match.awayTeam}</div>
-               `;
-               listEl.appendChild(matchEl);
-           });
-           document.getElementById('save-predictions-btn').disabled = false;
-       }
-
-       async function savePredictions() {
-           const newPredictions = {};
-           let allValid = true;
-
-           fixtures.forEach((match, index) => {
-               const matchId = `match-${index}`;
-               const homeInput = document.getElementById(`${matchId}-home`);
-               const awayInput = document.getElementById(`${matchId}-away`);
-              
-               const homeScore = parseInt(homeInput.value);
-               const awayScore = parseInt(awayInput.value);
-
-               if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0 || awayScore < 0) {
-                   allValid = false;
-               }
-
-               newPredictions[matchId] = { homeScore, awayScore };
-           });
-
-           if (!allValid) {
-               displayError('predictions-message', 'Please enter valid, non-negative scores for all matches.');
-               return;
-           }
-
-           try {
-               const predictionRef = getPredictionDocRef(getUserId(), currentGameweek);
-               await setDoc(predictionRef, { predictions: newPredictions, gameweek: currentGameweek, timestamp: serverTimestamp() });
-               predictions = newPredictions;
-               displaySuccess('predictions-message', 'Predictions saved successfully!');
-
-           } catch (error) {
-               console.error("Failed to save predictions:", error);
-               displayError('predictions-message', 'Failed to save predictions. Check console for details.');
-           }
-       }
-      
-       // --- Leaderboard Logic ---
-       function renderLeaderboardView() {
-           const listEl = document.getElementById('leaderboard-list');
-           listEl.innerHTML = '';
-
-           if (leaderboard.length === 0) {
-               listEl.innerHTML = '<p class="text-center text-gray-500">No registered teams yet.</p>';
-               return;
-           }
-
-           leaderboard.forEach((profile, index) => {
-               const isCurrentUser = profile.id === userId;
-               const itemEl = document.createElement('div');
-               itemEl.className = `flex justify-between items-center p-3 rounded-lg ${isCurrentUser ? 'bg-indigo-100 font-bold border-2 border-[#963CFF]' : 'bg-gray-50 border border-gray-200'}`;
-               itemEl.innerHTML = `
-                   <div class="flex items-center space-x-3">
-                       <span class="w-6 text-center font-extrabold">${index + 1}.</span>
-                       <span class="truncate">${profile.teamName} ${isCurrentUser ? '(You)' : ''}</span>
-                   </div>
-                   <span class="font-extrabold text-xl text-[#E90052]">${profile.points || 0} pts</span>
-               `;
-               listEl.appendChild(itemEl);
-           });
-       }
-      
-       // --- Profile Management Logic ---
-       function renderProfileView() {
-           if (!currentProfile) return;
-
-           document.getElementById('profile-first-name').value = currentProfile.firstName || '';
-           document.getElementById('profile-last-name').value = currentProfile.lastName || '';
-           document.getElementById('profile-email').value = currentProfile.email || '';
-           document.getElementById('profile-team-name').value = currentProfile.teamName || '';
-           document.getElementById('profile-pin').value = ''; // Never pre-fill the PIN input
-       }
-
-       async function updateProfile() {
-           if (!currentProfile || !userId || !isAuthReady) {
-               displayError('profile-message', 'Authentication error. Please re-sign in.');
-               return;
-           }
-
-           const firstName = document.getElementById('profile-first-name').value.trim();
-           const lastName = document.getElementById('profile-last-name').value.trim();
-           const email = document.getElementById('profile-email').value.trim();
-           const teamName = document.getElementById('profile-team-name').value.trim();
-           const newPin = document.getElementById('profile-pin').value.trim();
-
-           if (!firstName || !lastName || !email || !teamName || (newPin && newPin.length !== 4)) {
-               displayError('profile-message', 'All name/email/team fields are required. New PIN must be 4 digits or left blank.');
-               return;
-           }
-          
-           let updatedData = {
-               firstName,
-               lastName,
-               email,
-               teamName,
-               lastUpdated: serverTimestamp()
-           };
-
-           if (newPin && newPin.length === 4) {
-               updatedData.pin = newPin;
-           }
-          
-           // Validation: Check if the new teamName is already taken by another user
-           if (teamName !== currentProfile.teamName) {
-               const profilesRef = getPublicCollectionRef('profiles');
-               const q = query(profilesRef, where('teamName', '==', teamName));
-               const querySnapshot = await getDocs(q);
-
-               const teamTakenByAnother = querySnapshot.docs.some(doc => doc.id !== userId);
-
-               if (teamTakenByAnother) {
-                   displayError('profile-message', 'That Team Name is already taken by another user.');
-                   return;
-               }
-           }
-          
-           try {
-               // 1. Update Private Profile
-               const privateProfileRef = getPrivateProfileDocRef(userId);
-               await updateDoc(privateProfileRef, updatedData);
-
-               // 2. Update Public Profile (used for sign-in and leaderboard)
-               const publicProfileRef = doc(getPublicCollectionRef('profiles'), userId);
-               await updateDoc(publicProfileRef, updatedData);
-
-               // Update local state and UI
-               currentProfile = { ...currentProfile, ...updatedData };
-               displaySuccess('profile-message', 'Profile successfully updated!');
-               renderProfileView(); // Re-render to clear PIN field and ensure latest data is shown
-               updateAuthStatus(`Signed in as ${currentProfile.teamName}.`);
-
-           } catch (error) {
-               console.error("Failed to update profile:", error);
-               displayError('profile-message', `Update failed: ${error.message}`);
-           }
-       }
-
-
-       // --- Admin Mode: Fixture Population ---
-
-       function renderTeamDropdown(id, selectedTeam = '') {
-           let options = `<option value="">-- Select Team --</option>`;
-           TEAMS.forEach(team => {
-               options += `<option value="${team}" ${team === selectedTeam ? 'selected' : ''}>${team}</option>`;
-           });
-           return `<select id="${id}" class="w-full p-2 border rounded-lg team-select">${options}</select>`;
-       }
-
-       function renderFixturePopulation() {
-           fixturePopulationContainerEl.innerHTML = '';
-           for (let i = 0; i < 10; i++) {
-               const matchEl = document.createElement('div');
-               matchEl.className = 'flex items-center space-x-2';
-               matchEl.innerHTML = `
-                   <span class="w-6 text-gray-600 font-medium">${i + 1}.</span>
-                   <div class="w-1/2">${renderTeamDropdown(`fixture-home-${i}`)}</div>
-                   <span class="font-bold text-gray-500 vs-label">vs</span>
-                   <div class="w-1/2">${renderTeamDropdown(`fixture-away-${i}`)}</div>
-               `;
-               fixturePopulationContainerEl.appendChild(matchEl);
-           }
-       }
-
-       function validateFixtures() {
-           const allTeams = [];
-           const validationErrorEl = document.getElementById('fixture-validation-error');
-           let isValid = true;
-           let errors = [];
-
-           for (let i = 0; i < 10; i++) {
-               const homeTeam = document.getElementById(`fixture-home-${i}`).value;
-               const awayTeam = document.getElementById(`fixture-away-${i}`).value;
-
-               if (!homeTeam || !awayTeam) {
-                   errors.push(`Match ${i + 1}: Both teams must be selected.`);
-                   isValid = false;
-                   continue;
-               }
-
-               if (homeTeam === awayTeam) {
-                   errors.push(`Match ${i + 1}: Home and Away teams cannot be the same.`);
-                   isValid = false;
-                   continue;
-               }
-              
-               allTeams.push(homeTeam, awayTeam);
-           }
-
-           const uniqueTeams = new Set(allTeams);
-
-           if (uniqueTeams.size !== 20 || allTeams.length !== 20) {
-               errors.push(`Total team count must be exactly 20 (10 unique teams playing home and 10 unique teams playing away). Currently: ${uniqueTeams.size} unique teams.`);
-               isValid = false;
-           }
-
-           if (!isValid) {
-               validationErrorEl.textContent = errors.join(' | ');
-               validationErrorEl.classList.remove('hidden');
-           } else {
-               validationErrorEl.classList.add('hidden');
-           }
-
-           return isValid;
-       }
-
-       async function publishFixtures() {
-           if (!validateFixtures()) return;
-
-           const gameweek = parseInt(newGameweekInputEl.value);
-           if (isNaN(gameweek) || gameweek <= 0) return;
-
-           const matches = [];
-           for (let i = 0; i < 10; i++) {
-               matches.push({
-                   homeTeam: document.getElementById(`fixture-home-${i}`).value,
-                   awayTeam: document.getElementById(`fixture-away-${i}`).value,
-                   homeScore: null, // Actual scores start as null
-                   awayScore: null
-               });
-           }
-
-           try {
-               const fixtureRef = getFixtureDocRef(gameweek);
-               await setDoc(fixtureRef, { matches, timestamp: serverTimestamp() });
-              
-               // Using console log and alert replacement for admin actions
-               console.log('Fixtures published successfully!');
-               newGameweekInputEl.value = gameweek + 1; // Suggest next week
-               alert("Fixtures published successfully!");
-           } catch (error) {
-               console.error("Failed to publish fixtures:", error);
-               alert(`Error publishing fixtures: ${error.message}`);
-           }
-       }
-
-       // --- Admin Mode: Score Entry ---
-       function renderGameweekSelect(gwList) {
-           scoreGameweekSelectEl.innerHTML = '<option value="">-- Select Game Week --</option>';
-           gwList.sort((a, b) => b - a).forEach(gw => {
-               scoreGameweekSelectEl.innerHTML += `<option value="${gw}">Game Week ${gw}</option>`;
-           });
-       }
-
-       async function loadScoresForEntry(gameweek) {
-           scoreEntryListEl.innerHTML = '<p class="text-center text-gray-500">Loading...</p>';
-           saveScoresBtn.disabled = true;
-          
-           if (!gameweek) {
-               scoreEntryListEl.innerHTML = '<p class="text-center text-gray-500">Select a Game Week to enter scores.</p>';
-               return;
-           }
-
-           const fixtureRef = getFixtureDocRef(gameweek);
-           const fixtureSnap = await getDoc(fixtureRef);
-
-           if (!fixtureSnap.exists() || !fixtureSnap.data().matches) {
-               scoreEntryListEl.innerHTML = `<p class="text-center text-red-500">Fixtures for GW ${gameweek} not found.</p>`;
-               return;
-           }
-          
-           const matches = fixtureSnap.data().matches;
-           scoreEntryListEl.innerHTML = ''; // Clear loading
-
-           matches.forEach((match, index) => {
-               const matchId = `score-match-${index}`;
-              
-               const matchEl = document.createElement('div');
-               matchEl.className = 'flex items-center space-x-2 p-3 bg-gray-50 rounded-lg border';
-               matchEl.innerHTML = `
-                   <div class="font-semibold text-gray-700 w-1/3 text-right truncate">${match.homeTeam}</div>
-                   <input type="number" id="${matchId}-home" value="${match.homeScore !== null ? match.homeScore : ''}" min="0" placeholder="0" class="w-12 text-center p-1 border rounded-md score-input focus:ring-[#963CFF] focus:border-[#963CFF]">
-                   <span class="font-bold text-gray-500">-</span>
-                   <input type="number" id="${matchId}-away" value="${match.awayScore !== null ? match.awayScore : ''}" min="0" placeholder="0" class="w-12 text-center p-1 border rounded-md score-input focus:ring-[#963CFF] focus:border-[#963CFF]">
-                   <div class="font-semibold text-gray-700 w-1/3 text-left truncate">${match.awayTeam}</div>
-               `;
-               scoreEntryListEl.appendChild(matchEl);
-           });
-           saveScoresBtn.disabled = false;
-       }
-
-       async function saveActualScoresAndCalculate() {
-           const gameweek = parseInt(scoreGameweekSelectEl.value);
-           if (isNaN(gameweek) || gameweek <= 0) return;
-
-           // Get the current list of fixtures to ensure we match teams correctly
-           const fixtureSnap = await getDoc(getFixtureDocRef(gameweek));
-           if (!fixtureSnap.exists()) return;
-           const originalMatches = fixtureSnap.data().matches;
-
-
-           const matches = [];
-           let allValid = true;
-          
-           for (let i = 0; i < 10; i++) {
-               const matchId = `score-match-${i}`;
-               const homeScore = parseInt(document.getElementById(`${matchId}-home`).value);
-               const awayScore = parseInt(document.getElementById(`${matchId}-away`).value);
-
-               if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0 || awayScore < 0) {
-                   allValid = false;
-               }
-
-               matches.push({
-                   homeTeam: originalMatches[i].homeTeam,
-                   awayTeam: originalMatches[i].awayTeam,
-                   homeScore,
-                   awayScore
-               });
-           }
-
-           if (!allValid) {
-               alert('Please enter valid, non-negative actual scores for all matches.');
-               return;
-           }
-
-           try {
-               // 1. Update the official fixtures with actual scores
-               const fixtureRef = getFixtureDocRef(gameweek);
-               await updateDoc(fixtureRef, { matches });
-
-               // 2. Trigger Score Calculation (Simplified: Recalculate all profiles)
-               await calculateAllScores(gameweek, matches);
-              
-               alert('Actual scores saved and points calculated successfully!');
-              
-           } catch (error) {
-               console.error("Failed to save scores or calculate points:", error);
-               alert(`Error processing scores: ${error.message}`);
-           }
-       }
-      
-       // --- Scoring Function (Client-side simulation) ---
-       async function calculateAllScores(gameweek, actualMatches) {
-           const profilesRef = getPublicCollectionRef('profiles');
-           const profilesSnap = await getDocs(profilesRef);
-          
-           const scoringPromises = profilesSnap.docs.map(async (profileDoc) => {
-               const uid = profileDoc.id;
-               const predictionRef = getPredictionDocRef(uid, gameweek);
-               const predictionSnap = await getDoc(predictionRef);
-
-               if (!predictionSnap.exists()) return; // User made no prediction
-
-               const predictions = predictionSnap.data().predictions;
-               let gwPoints = 0;
-
-               actualMatches.forEach((actual, index) => {
-                   const matchId = `match-${index}`;
-                   const predicted = predictions[matchId];
-                   if (!predicted) return;
-
-                   // Convert scores to results (W/D/L)
-                   const actualResult = Math.sign(actual.homeScore - actual.awayScore); // -1 (Away win), 0 (Draw), 1 (Home Win)
-                   const predictedResult = Math.sign(predicted.homeScore - predicted.awayScore);
-
-                   // 1. Correct Result (3 points)
-                   if (actualResult === predictedResult) {
-                       gwPoints += 3;
-
-                       // 2. Correct Score (5 points, overrides 3 points)
-                       if (actual.homeScore === predicted.homeScore && actual.awayScore === predicted.awayScore) {
-                           // If score is exactly correct, add 2 more points (3 + 2 = 5 total)
-                           // The score calculation is simplified to 3 points for correct result,
-                           // but traditionally it's 3 for result, and 5 for correct score. We keep the total 5 here.
-                           gwPoints = gwPoints - 3 + 5;
-                       }
-                   }
-               });
-
-               // Update the user's total points (Simplification: just set points, in reality you'd sum up all GWs)
-               const currentTotalPoints = (profileDoc.data().points || 0);
-               const newTotalPoints = currentTotalPoints + gwPoints; // Simplification: just add points
-
-               // Update profile document (used for leaderboard)
-               const publicProfileRef = doc(profilesRef, uid);
-               await updateDoc(publicProfileRef, {
-                   points: newTotalPoints,
-                   lastUpdated: serverTimestamp()
-               });
-           });
-
-           await Promise.all(scoringPromises);
-       }
-      
-       // --- Event Listeners Setup ---
-       function setupEventListeners() {
-           // Admin Toggle
-           adminToggleBtn.addEventListener('click', () => {
-               isAdmin = !isAdmin;
-               adminToggleBtn.textContent = isAdmin ? 'Exit Admin' : 'Admin Mode';
-               adminToggleBtn.classList.toggle('bg-red-500', isAdmin);
-               adminToggleBtn.classList.toggle('text-white', isAdmin);
-               switchView(isAdmin ? 'admin-view' : 'predictions-view');
-               if (isAdmin) renderFixturePopulation();
-           });
-
-           // Auth Choice
-           document.getElementById('show-signup-btn').addEventListener('click', () => switchView('signup-view'));
-           document.getElementById('show-signin-btn').addEventListener('click', () => switchView('signin-view'));
-           document.getElementById('back-to-choice-signup').addEventListener('click', () => switchView('auth-choice-view'));
-           document.getElementById('back-to-choice-signin').addEventListener('click', () => switchView('auth-choice-view'));
-
-           // Sign Up/In Actions
-           document.getElementById('signup-btn').addEventListener('click', createProfile);
-           document.getElementById('signin-btn').addEventListener('click', signIn);
-
-           // App Navigation
-           document.getElementById('show-predictions-btn').addEventListener('click', () => switchView('predictions-view'));
-           document.getElementById('show-leaderboard-btn').addEventListener('click', () => switchView('leaderboard-view'));
-           document.getElementById('show-profile-btn').addEventListener('click', () => switchView('profile-view')); // NEW
-
-           // Profile Save
-           document.getElementById('update-profile-btn').addEventListener('click', updateProfile); // NEW
-
-           // Prediction Save
-           document.getElementById('save-predictions-btn').addEventListener('click', savePredictions);
-
-           // Admin Actions
-           publishFixturesBtn.addEventListener('click', publishFixtures);
-           scoreGameweekSelectEl.addEventListener('change', (e) => loadScoresForEntry(parseInt(e.target.value)));
-           saveScoresBtn.addEventListener('click', saveActualScoresAndCalculate);
-
-           // Initial render for admin view
-           renderFixturePopulation();
-       }
-
-       // Start the application
-       setupEventListeners();
-       initializeAppAndAuth();
-
-   </script>
+<body class="bg-gray-50">
+
+    <div id="root"></div>
+
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Expose Firebase modules globally so they can be accessed by the Babel script
+        window.firebase = {
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs, setLogLevel
+        };
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+        const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs } = window.firebase || {};
+
+        // --- CONFIGURATION SETUP (FIXED) ---
+
+        let config, token, appIdentifier;
+
+        // Check for Canvas environment globals (Fixes the API Key error)
+        if (typeof __firebase_config !== 'undefined') {
+            config = JSON.parse(__firebase_config);
+            token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            appIdentifier = typeof __app_id !== 'undefined' ? __app_id : 'pl-predictor-default';
+        } else {
+            // Running on a public site (GitHub Pages) - REQUIRES USER INPUT
+            // 🛑 YOU MUST REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL KEYS FOR GITHUB PAGES 🛑
+            const YOUR_PUBLIC_FIREBASE_CONFIG = {
+                apiKey: "AIzaSyDWepvqTGqLcjziToDwwbj48oZNRplJX_M",
+  					authDomain: "premier-league-predictor-live.firebaseapp.com",
+  					projectId: "premier-league-predictor-live",
+  					storageBucket: "premier-league-predictor-live.firebasestorage.app",
+  					messagingSenderId: "599727798420",
+  					appId: "1:599727798420:web:f2cbe07ca328db5aab1c81"
+            };
+            config = YOUR_PUBLIC_FIREBASE_CONFIG;
+            token = null; 
+            appIdentifier = config.projectId || 'pl-predictor-default'; 
+        }
+
+        const firebaseConfig = config;
+        const initialAuthToken = token;
+        const appId = appIdentifier;
+
+        // --- END CONFIGURATION SETUP ---
+
+
+        // --- APP CONFIGURATION ---
+
+        const CURRENT_GAMEWEEK = 14;
+
+        const PREMIER_LEAGUE_TEAMS = [
+            'Arsenal', 'Aston Villa', 'Bournemouth', 'Brentford', 'Brighton and Hove Albion',
+            'Burnley', 'Chelsea', 'Crystal Palace', 'Everton', 'Fulham',
+            'Leeds United', 'Leicester City', 'Liverpool', 'Manchester City', 'Manchester United', 
+            'Newcastle United', 'Nottingham Forest', 'Southampton', 'Tottenham Hotspur', 'West Ham United', 
+            'Wolverhampton Wanderers'
+        ].sort();
+
+        // Initial hardcoded matches for the current gameweek (GW14)
+        const GAMEWEEK_MATCHES = [
+            { id: 'bou_eve', home: 'Bournemouth', away: 'Everton' },
+            { id: 'ful_mci', home: 'Fulham', away: 'Manchester City' },
+            { id: 'new_tot', home: 'Newcastle United', away: 'Tottenham Hotspur' },
+            { id: 'ars_bre', home: 'Arsenal', away: 'Brentford' },
+            { id: 'bha_avl', home: 'Brighton and Hove Albion', away: 'Aston Villa' },
+            { id: 'bur_cry', home: 'Burnley', away: 'Crystal Palace' },
+            { id: 'wol_nfo', home: 'Wolverhampton Wanderers', away: 'Nottingham Forest' },
+            { id: 'lee_che', home: 'Leeds United', away: 'Chelsea' },
+            { id: 'liv_sun', home: 'Liverpool', away: 'Sunderland' }, 
+            { id: 'mun_whu', home: 'Manchester United', away: 'West Ham United' },
+        ];
+
+        const SCORING_RULES = {
+            SPOT_ON: 5,
+            CORRECT_RESULT: 2,
+            GOAL_THRILLER_BONUS: 5,
+        };
+
+        // --- SCORING LOGIC ---
+
+        const calculateScore = (prediction, result) => {
+            if (prediction.home === '' || prediction.away === '' || result.home === '' || result.away === '') {
+                return 0;
+            }
+
+            const p_h = parseInt(prediction.home, 10);
+            const p_a = parseInt(prediction.away, 10);
+            const r_h = parseInt(result.home, 10);
+            const r_a = parseInt(result.away, 10);
+
+            let score = 0;
+
+            // 1. Check for Spot-on Score
+            if (p_h === r_h && p_a === r_a) {
+                score = SCORING_RULES.SPOT_ON;
+                const totalGoals = r_h + r_a;
+                if (totalGoals >= 6) {
+                    score += SCORING_RULES.GOAL_THRILLER_BONUS;
+                }
+                return score;
+            }
+
+            // Determine the result sign: 1 (Home Win), -1 (Away Win), 0 (Draw)
+            const getResultSign = (h, a) => {
+                if (h > a) return 1;
+                if (h < a) return -1;
+                return 0;
+            };
+
+            const actualSign = getResultSign(r_h, r_a);
+            const predictedSign = getResultSign(p_h, p_a);
+
+            // 2. Check for Correct Result (Win/Draw)
+            if (actualSign === predictedSign) {
+                score = SCORING_RULES.CORRECT_RESULT;
+            }
+
+            return score;
+        };
+
+        // --- REACT COMPONENT ---
+
+        const App = () => {
+            // Firebase State
+            const [db, setDb] = useState(null);
+            const [userId, setUserId] = useState(null);
+            const [isAuthReady, setIsAuthReady] = useState(false);
+
+            // App State
+            const [activeTab, setActiveTab] = useState('predict');
+            
+            // Prediction State
+            const [predictionInput, setPredictionInput] = useState({});
+            const [savedPredictions, setSavedPredictions] = useState({});
+
+            // Official Results and Leaderboard
+            const [officialResults, setOfficialResults] = useState({});
+            const [leaderboard, setLeaderboard] = useState([]);
+            const [message, setMessage] = useState('');
+            const [loading, setLoading] = useState(true);
+
+            // Admin Panel State
+            const [adminGw, setAdminGw] = useState(CURRENT_GAMEWEEK); 
+            const [adminMatchResults, setAdminMatchResults] = useState({}); 
+            const [adminMatchSetup, setAdminMatchSetup] = useState([]); 
+            const [newMatchHomeTeam, setNewMatchHomeTeam] = useState('');
+            const [newMatchAwayTeam, setNewMatchAwayTeam] = useState('');
+
+            // --- FIREBASE INITIALIZATION & AUTH ---
+            useEffect(() => {
+                if (!initializeApp) {
+                    setMessage("Firebase SDK not loaded. Check script imports.");
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!Object.keys(firebaseConfig).length || firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+                    setMessage("⚠️ Warning: Firebase configuration is using placeholder keys. Please update them for public deployment.");
+                    // Still proceed with anonymous sign-in attempt
+                }
+
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    const authInstance = getAuth(app);
+                    const dbInstance = getFirestore(app);
+
+                    setDb(dbInstance);
+
+                    const authenticate = async () => {
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(authInstance, initialAuthToken);
+                            } else {
+                                await signInAnonymously(authInstance);
+                            }
+                        } catch (error) {
+                            console.error("Firebase Auth Error:", error);
+                            setMessage(`Authentication failed: ${error.message}`);
+                        }
+                    };
+
+                    authenticate();
+
+                    const unsubscribe = onAuthStateChanged(authInstance, (user) => {
+                        if (user) {
+                            setUserId(user.uid);
+                        } else {
+                            setUserId(null);
+                        }
+                        setIsAuthReady(true);
+                        setLoading(false);
+                    });
+
+                    return () => unsubscribe();
+
+                } catch (error) {
+                    console.error("Initialization Error:", error);
+                    setMessage(`App initialization failed: ${error.message}`);
+                    setLoading(false);
+                }
+            }, []);
+
+            // --- FIRESTORE PATHS ---
+            const getPredictionDocRef = useCallback((uId, gw) => {
+                if (!db) return null;
+                // Private Data: /artifacts/{appId}/users/{userId}/predictions/{gameweek}
+                return doc(db, 'artifacts', appId, 'users', uId, 'predictions', String(gw));
+            }, [db, appId]);
+
+            const getOfficialResultsDocRef = useCallback((gw) => {
+                if (!db) return null;
+                // Public Data: /artifacts/{appId}/public/data/results/{gameweek}
+                return doc(db, 'artifacts', appId, 'public', 'data', 'results', String(gw));
+            }, [db, appId]);
+
+            const getAllUserPredictionsCollectionRef = useCallback(() => {
+                if (!db) return null;
+                // Public Data: /artifacts/{appId}/public/data/all_predictions
+                return collection(db, 'artifacts', appId, 'public', 'data', 'all_predictions');
+            }, [db, appId]);
+
+            // --- DATA LISTENERS ---
+
+            // Listener 1: Fetch Current User's Predictions (Private, focuses on CURRENT_GAMEWEEK)
+            useEffect(() => {
+                if (!db || !userId) return;
+
+                const docRef = getPredictionDocRef(userId, CURRENT_GAMEWEEK);
+
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        setSavedPredictions(data.predictions || {});
+                        setPredictionInput(data.predictions || {});
+                    } else {
+                        setSavedPredictions({});
+                    }
+                }, (error) => console.error("Error reading user prediction:", error));
+
+                return () => unsubscribe();
+            }, [db, userId, getPredictionDocRef]);
+
+
+            // Listener 2: Fetch Official Results for CURRENT_GAMEWEEK (Public)
+            useEffect(() => {
+                if (!db || !isAuthReady) return;
+
+                const docRef = getOfficialResultsDocRef(CURRENT_GAMEWEEK);
+
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setOfficialResults(docSnap.data().results || {});
+                    } else {
+                        setOfficialResults({});
+                    }
+                }, (error) => console.error("Error reading official results:", error));
+
+                return () => unsubscribe();
+            }, [db, isAuthReady, getOfficialResultsDocRef]);
+
+
+            // Listener 3: Fetch Official Results for Admin GW (Public)
+            useEffect(() => {
+                if (!db || !isAuthReady || activeTab !== 'admin') return; 
+
+                const docRef = getOfficialResultsDocRef(adminGw);
+
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const results = docSnap.data().results || {};
+                        setAdminMatchResults(results);
+                        
+                        const matches = Object.keys(results).map(id => {
+                            const savedMatchData = results[id];
+                            const homeTeam = savedMatchData.homeTeam || id.split('_')[0];
+                            const awayTeam = savedMatchData.awayTeam || id.split('_')[1];
+
+                            return { 
+                                id, 
+                                home: homeTeam, 
+                                away: awayTeam, 
+                                homeScore: savedMatchData.home, 
+                                awayScore: savedMatchData.away 
+                            };
+                        });
+
+                        if (matches.length === 0 && adminGw === CURRENT_GAMEWEEK) {
+                            setAdminMatchSetup(GAMEWEEK_MATCHES.map(m => ({
+                                ...m,
+                                homeScore: '',
+                                awayScore: ''
+                            })));
+                        } else {
+                            setAdminMatchSetup(matches);
+                        }
+
+                    } else {
+                        setAdminMatchResults({});
+                        if (adminGw === CURRENT_GAMEWEEK) {
+                            setAdminMatchSetup(GAMEWEEK_MATCHES.map(m => ({
+                                ...m,
+                                homeScore: '',
+                                awayScore: ''
+                            })));
+                        } else {
+                            setAdminMatchSetup([]);
+                        }
+                    }
+                }, (error) => console.error(`Error reading Admin GW${adminGw} results:`, error));
+
+                return () => unsubscribe();
+            }, [db, isAuthReady, adminGw, activeTab, getOfficialResultsDocRef]);
+
+
+            // Listener 4: Fetch ALL Predictions and Calculate Leaderboard (Public)
+            useEffect(() => {
+                if (!db || !isAuthReady) return;
+
+                const allPredsColRef = getAllUserPredictionsCollectionRef();
+
+                const calculateLeaderboard = async () => {
+                    const results = officialResults;
+
+                    // 1. Fetch all predictions for all users
+                    const q = query(allPredsColRef);
+                    const snapshot = await getDocs(q);
+
+                    const allPredictionsData = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const uId = data.userId;
+                        const gw = data.gameweek;
+
+                        if (!allPredictionsData[uId]) {
+                            allPredictionsData[uId] = {
+                                userId: uId,
+                                totalScore: 0,
+                                predictions: {}
+                            };
+                        }
+
+                        if (gw === CURRENT_GAMEWEEK) {
+                            allPredictionsData[uId].predictions = data.predictions || {};
+                        }
+                    });
+
+                    // 2. Calculate scores
+                    const finalLeaderboard = Object.values(allPredictionsData).map(player => {
+                        let gwScore = 0;
+
+                        GAMEWEEK_MATCHES.forEach(match => {
+                            const pred = player.predictions[match.id];
+                            const res = results[match.id];
+
+                            if (pred && res) {
+                                gwScore += calculateScore(pred, res);
+                            }
+                        });
+
+                        player.totalScore = gwScore;
+                        return player;
+                    });
+
+                    // 3. Sort and Update Leaderboard
+                    finalLeaderboard.sort((a, b) => b.totalScore - a.totalScore);
+                    setLeaderboard(finalLeaderboard);
+                    setLoading(false);
+                };
+
+                calculateLeaderboard();
+
+            }, [db, isAuthReady, officialResults, getAllUserPredictionsCollectionRef]);
+
+
+            // --- DATA HANDLERS ---
+
+            const handlePredictionChange = (matchId, type, value) => {
+                const score = value === '' ? '' : Math.max(0, parseInt(value, 10));
+
+                setPredictionInput(prev => ({
+                    ...prev,
+                    [matchId]: {
+                        ...prev[matchId],
+                        [type]: score
+                    }
+                }));
+            };
+
+            const handleSavePrediction = async () => {
+                if (!db || !userId) {
+                    setMessage("Error: Not authenticated or Firestore not ready.");
+                    return;
+                }
+
+                try {
+                    setLoading(true);
+                    setMessage("Saving prediction...");
+
+                    // 1. Save to Private Storage (User's personal record)
+                    const privateDocRef = getPredictionDocRef(userId, CURRENT_GAMEWEEK);
+                    const privateData = {
+                        gameweek: CURRENT_GAMEWEEK,
+                        predictions: predictionInput,
+                        timestamp: new Date().toISOString()
+                    };
+                    await setDoc(privateDocRef, privateData, { merge: true });
+
+                    // 2. Save to Public Collection (For Leaderboard calculation)
+                    const publicDocId = `${userId}-${CURRENT_GAMEWEEK}`;
+                    const publicDocRef = doc(getAllUserPredictionsCollectionRef(), publicDocId);
+                    const publicData = {
+                        userId: userId,
+                        gameweek: CURRENT_GAMEWEEK,
+                        predictions: predictionInput,
+                        timestamp: new Date().toISOString()
+                    };
+                    await setDoc(publicDocRef, publicData, { merge: true });
+
+                    setMessage("Prediction saved successfully! Check the Leaderboard tab.");
+                } catch (e) {
+                    console.error("Error saving prediction: ", e);
+                    setMessage(`Failed to save prediction: ${e.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            // Admin Handlers
+            const handleAdminMatchChange = (index, type, value) => {
+                const score = value === '' ? '' : Math.max(0, parseInt(value, 10));
+                setAdminMatchSetup(prev => {
+                    const newSetup = [...prev];
+                    newSetup[index][type] = score;
+                    return newSetup;
+                });
+            };
+
+            const handleAdminAddMatch = (home, away) => {
+                if (home === '' || away === '' || home === away) {
+                    setMessage("Please select two different teams.");
+                    return;
+                }
+
+                const newId = `${home.replace(/\s/g, '').toLowerCase()}_${away.replace(/\s/g, '').toLowerCase()}`;
+                const reverseId = `${away.replace(/\s/g, '').toLowerCase()}_${home.replace(/\s/g, '').toLowerCase()}`;
+
+                if (adminMatchSetup.some(m => m.id === newId || m.id === reverseId)) {
+                    setMessage("This fixture (or the reverse) already exists for this gameweek.");
+                    return;
+                }
+
+                setAdminMatchSetup(prev => [
+                    ...prev,
+                    { 
+                        id: newId, 
+                        home: home, 
+                        away: away, 
+                        homeScore: '', 
+                        awayScore: '' 
+                    }
+                ]);
+                setMessage(`Added match: ${home} vs ${away}. Don't forget to save the results!`);
+                setNewMatchHomeTeam('');
+                setNewMatchAwayTeam('');
+            };
+
+            const handleAdminDeleteMatch = (matchId) => {
+                setAdminMatchSetup(prev => prev.filter(match => match.id !== matchId));
+                setMessage("Match deleted from the current setup. Remember to save changes.");
+            };
+
+            const handleSaveOfficialResults = async () => {
+                if (!db) {
+                    setMessage("Error: Firestore not ready.");
+                    return;
+                }
+
+                try {
+                    setLoading(true);
+                    setMessage(`Saving official results for GW${adminGw}...`);
+
+                    const resultsPayload = {};
+                    adminMatchSetup.forEach(match => {
+                        const homeScore = match.homeScore === '' ? '' : parseInt(match.homeScore, 10);
+                        const awayScore = match.awayScore === '' ? '' : parseInt(match.awayScore, 10);
+                        
+                        if (match.id && match.home && match.away) {
+                            resultsPayload[match.id] = {
+                                home: homeScore,
+                                away: awayScore,
+                                homeTeam: match.home,
+                                awayTeam: match.away
+                            };
+                        }
+                    });
+
+                    const docRef = getOfficialResultsDocRef(adminGw);
+                    const data = {
+                        gameweek: adminGw,
+                        results: resultsPayload,
+                        timestamp: new Date().toISOString()
+                    };
+                    await setDoc(docRef, data, { merge: true });
+
+                    setMessage(`Official results for GW${adminGw} saved successfully!`);
+                } catch (e) {
+                    console.error("Error saving results: ", e);
+                    setMessage(`Failed to save official results: ${e.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+
+            // --- RENDERING COMPONENTS ---
+
+            const renderGameweekSelector = (currentGw, setter) => (
+                <div className="flex items-center space-x-2">
+                    <label className="text-gray-600 font-medium whitespace-nowrap">Select Gameweek:</label>
+                    <input
+                        type="number"
+                        min="1"
+                        max="38"
+                        value={currentGw}
+                        onChange={(e) => setter(Math.max(1, Math.min(38, parseInt(e.target.value) || 1)))}
+                        className="w-20 p-2 border border-gray-300 rounded-lg text-center focus:ring-rose-500 focus:border-rose-500 transition"
+                    />
+                </div>
+            );
+
+            const renderPredictionForm = () => (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-gray-800">Your Predictions (GW{CURRENT_GAMEWEEK})</h2>
+                    <p className="text-sm text-gray-500">Enter your score predictions below for the current gameweek. Click Save to submit them to the league.</p>
+
+                    <div className="bg-white p-4 rounded-xl shadow-lg space-y-4 border">
+                        {GAMEWEEK_MATCHES.map(match => (
+                            <div key={match.id} className="flex flex-col items-center justify-between p-3 border-b last:border-b-0">
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="font-bold text-gray-800 text-left whitespace-nowrap flex-1 min-w-0 pr-2 overflow-hidden text-ellipsis">
+                                        {match.home}
+                                    </span>
+                                    <div className="flex items-center space-x-2 flex-shrink-0">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={predictionInput[match.id]?.home ?? ''}
+                                            onChange={(e) => handlePredictionChange(match.id, 'home', e.target.value)}
+                                            className="w-12 p-2 border border-gray-300 rounded-lg text-center focus:ring-rose-500 focus:border-rose-500 transition"
+                                            placeholder="0"
+                                        />
+                                        <span className="font-bold text-lg text-gray-700">-</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={predictionInput[match.id]?.away ?? ''}
+                                            onChange={(e) => handlePredictionChange(match.id, 'away', e.target.value)}
+                                            className="w-12 p-2 border border-gray-300 rounded-lg text-center focus:ring-rose-500 focus:border-rose-500 transition"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <span className="text-gray-800 text-right whitespace-nowrap flex-1 min-w-0 pl-2 overflow-hidden text-ellipsis">
+                                        {match.away}
+                                    </span>
+                                </div>
+                                <div className="w-full text-xs text-center mt-2 text-rose-600 font-semibold">
+                                    {savedPredictions[match.id] ? `Saved: ${savedPredictions[match.id].home}-${savedPredictions[match.id].away}` : 'Not saved'}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <button
+                        onClick={handleSavePrediction}
+                        disabled={loading || !userId}
+                        className="w-full sm:w-auto px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? 'Submitting...' : `Save GW${CURRENT_GAMEWEEK} Prediction`}
+                    </button>
+                </div>
+            );
+
+            const renderAdminResultsInput = () => (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-rose-600">Admin Results Input Panel (Access for all users)</h2>
+                    <p className="text-sm text-gray-500">Input and save the *actual* final scores for any gameweek. This updates the official results and the leaderboard.</p>
+                    
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-xl shadow-inner space-y-3 sm:space-y-0" style={{backgroundColor: '#E9005210'}}>
+                        {renderGameweekSelector(adminGw, setAdminGw)}
+                        <button
+                            onClick={handleSaveOfficialResults}
+                            disabled={loading}
+                            className="w-full sm:w-auto px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Saving Results...' : `Save GW${adminGw} Results`}
+                        </button>
+                    </div>
+
+                    <h3 className="text-xl font-semibold text-gray-700 mt-6">Current Matches for GW{adminGw}</h3>
+                    
+                    <div className="bg-white p-4 rounded-xl shadow-lg space-y-4 border">
+                        {adminMatchSetup.length === 0 && (
+                            <p className="text-gray-500 p-4 text-center">No matches defined for GW{adminGw}. Use the form below to add fixtures.</p>
+                        )}
+                        {adminMatchSetup.map((match, index) => (
+                            <div key={match.id + index} className="flex flex-col items-center justify-between p-3 border-b last:border-b-0">
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="font-bold text-gray-800 text-left whitespace-nowrap flex-1 min-w-0 pr-2 overflow-hidden text-ellipsis">
+                                        {match.home}
+                                    </span>
+                                    <div className="flex items-center space-x-2 flex-shrink-0">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={match.homeScore ?? ''}
+                                            onChange={(e) => handleAdminMatchChange(index, 'homeScore', e.target.value)}
+                                            className="w-12 p-2 border border-rose-300 rounded-lg text-center focus:ring-rose-500 focus:border-rose-500 transition"
+                                            placeholder="0"
+                                        />
+                                        <span className="font-bold text-lg text-gray-700">-</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={match.awayScore ?? ''}
+                                            onChange={(e) => handleAdminMatchChange(index, 'awayScore', e.target.value)}
+                                            className="w-12 p-2 border border-rose-300 rounded-lg text-center focus:ring-rose-500 focus:border-rose-500 transition"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-end flex-1 min-w-0 pl-2 space-x-2">
+                                        <span className="text-gray-800 text-right whitespace-nowrap overflow-hidden text-ellipsis">
+                                            {match.away}
+                                        </span>
+                                        <button
+                                            onClick={() => handleAdminDeleteMatch(match.id)}
+                                            className="text-rose-500 hover:text-rose-700 p-1 rounded-full hover:bg-rose-100 transition flex-shrink-0"
+                                            title="Delete Match"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <h3 className="text-xl font-semibold text-gray-700 mt-8">Add New Fixture for GW{adminGw}</h3>
+                    <div className="bg-gray-100 p-4 rounded-xl shadow-inner flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
+                        <select
+                            value={newMatchHomeTeam}
+                            onChange={(e) => setNewMatchHomeTeam(e.target.value)}
+                            className="p-2 border border-gray-300 rounded-lg flex-1 focus:ring-rose-500 focus:border-rose-500"
+                        >
+                            <option value="">Select Home Team</option>
+                            {PREMIER_LEAGUE_TEAMS.filter(t => t !== newMatchAwayTeam).map(team => (
+                                <option key={team} value={team}>{team}</option>
+                            ))}
+                        </select>
+                        <span className="font-bold text-lg text-center">VS</span>
+                        <select
+                            value={newMatchAwayTeam}
+                            onChange={(e) => setNewMatchAwayTeam(e.target.value)}
+                            className="p-2 border border-gray-300 rounded-lg flex-1 focus:ring-rose-500 focus:border-rose-500"
+                        >
+                            <option value="">Select Away Team</option>
+                            {PREMIER_LEAGUE_TEAMS.filter(t => t !== newMatchHomeTeam).map(team => (
+                                <option key={team} value={team}>{team}</option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={() => handleAdminAddMatch(newMatchHomeTeam, newMatchAwayTeam)}
+                            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition disabled:opacity-50"
+                            disabled={!newMatchHomeTeam || !newMatchAwayTeam}
+                        >
+                            Add Match
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderLeaderboard = () => (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-gray-800">League Leaderboard</h2>
+                    <p className="text-sm text-gray-500">Scores are calculated based on all submitted predictions and the official results for GW{CURRENT_GAMEWEEK}.</p>
+
+                    <div className="overflow-x-auto bg-white rounded-xl shadow-lg">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player ID</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">GW{CURRENT_GAMEWEEK} Score</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {leaderboard.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">No predictions submitted yet, or results are missing.</td>
+                                    </tr>
+                                ) : (
+                                    leaderboard.map((player, index) => (
+                                        <tr key={player.userId} className={player.userId === userId ? 'bg-rose-50 font-bold' : 'hover:bg-gray-50'}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 break-all">{player.userId} {player.userId === userId && '(You)'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-lg font-extrabold text-rose-700">{player.totalScore}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+
+
+            if (loading && !isAuthReady) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+                        <div className="text-center p-6 bg-white rounded-xl shadow-lg">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto mb-3"></div>
+                            <p className="text-gray-600">Initializing Predictor League...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-4 sm:p-8 font-sans">
+                    <div className="max-w-4xl mx-auto">
+                        <header className="text-center mb-10">
+                            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">⚽ Premier League Predictor</h1>
+                            <p className="text-md text-gray-600">Gameweek {CURRENT_GAMEWEEK} Challenge</p>
+                            <div className="text-sm text-gray-400 mt-2 flex justify-center items-center">
+                                Your User ID: <span className="font-mono text-gray-700 break-all ml-1 mr-4">{userId || 'Loading...'}</span>
+                                {userId && (
+                                    <button 
+                                        onClick={() => setActiveTab('admin')}
+                                        className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow-md transition"
+                                    >
+                                        Go to Admin Panel
+                                    </button>
+                                )}
+                            </div>
+                        </header>
+
+                        {/* Tabs Navigation */}
+                        <div className="flex justify-center mb-8 border-b border-gray-200">
+                            <button
+                                onClick={() => setActiveTab('predict')}
+                                className={`py-3 px-6 text-sm font-medium transition-colors duration-200 ${activeTab === 'predict' ? 'border-b-4 border-rose-600 text-rose-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                Make Prediction
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('leaderboard')}
+                                className={`py-3 px-6 text-sm font-medium transition-colors duration-200 ${activeTab === 'leaderboard' ? 'border-b-4 border-rose-600 text-rose-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                Leaderboard
+                            </button>
+                        </div>
+
+                        {/* Message Box */}
+                        {message && (
+                            <div className={`border px-4 py-3 rounded-xl mb-6 shadow-sm ${message.includes('Error') ? 'bg-red-100 border-red-400 text-red-700' : 'bg-rose-100 border-rose-400 text-rose-700'}`} role="alert">
+                                <p className="font-semibold text-sm">{message}</p>
+                            </div>
+                        )}
+
+                        {/* Content based on Active Tab */}
+                        <main className="p-4 bg-white rounded-2xl shadow-2xl">
+                            {activeTab === 'predict' && renderPredictionForm()}
+                            {activeTab === 'leaderboard' && renderLeaderboard()}
+                            {activeTab === 'admin' && renderAdminResultsInput()}
+                        </main>
+
+                        {/* Scoring Rules Footer */}
+                        <footer className="mt-8 p-4 text-white rounded-xl shadow-lg" style={{ backgroundColor: '#360D3A' }}>
+                            <h3 className="font-semibold text-lg mb-2">Scoring Rules:</h3>
+                            <ul className="text-sm space-y-1">
+                                <li><span className="font-bold" style={{color: '#E90052'}}>5 Points:</span> Exact score prediction (e.g., predicted 2-1, actual 2-1).</li>
+                                <li><span className="font-bold" style={{color: '#E90052'}}>10 Points:</span> Exact score prediction *if* the game is a '6-goal thriller' (total goals $\ge$ 6, e.g., predicted 4-2, actual 4-2).</li>
+                                <li><span className="font-bold" style={{color: '#E90052'}}>2 Points:</span> Correct match result (correct winner or a correct draw, but not the exact score).</li>
+                            </ul>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 </body>
 </html>
-
-
